@@ -31,6 +31,23 @@ spec:
         runAsGroup: 65532
         seccompProfile:
           type: RuntimeDefault
+      {{- if .Values.postgres.enabled }}
+      initContainers:
+        # Wait for the bundled Postgres so the broker doesn't crash-loop on first
+        # boot (it fail-closes when its spend store is unreachable).
+        - name: wait-postgres
+          image: busybox:stable
+          command:
+            - sh
+            - -c
+            - 'until nc -z {{ include "clankstack-broker.postgresHost" . }} 5432; do echo "waiting for postgres"; sleep 2; done'
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+      {{- end }}
       containers:
         - name: broker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
