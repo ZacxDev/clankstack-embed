@@ -7,9 +7,9 @@ description: >-
 type: application
 version: 0.1.0
 appVersion: "0.3.3"
-home: https://github.com/ZacxDev/kubeclaw-embed
+home: https://github.com/ZacxDev/clankstack-embed
 sources:
-  - https://github.com/ZacxDev/kubeclaw-embed
+  - https://github.com/ZacxDev/clankstack-embed
 keywords:
   - clankstack
   - agent

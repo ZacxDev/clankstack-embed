@@ -1,19 +1,39 @@
-# kubeclaw-embed
+# clankstack-embed
 
-Put a clankstack agent on any website with a `<script>` tag and one element —
-safely. This is the public web-integration surface for the clankstack agent
-framework: the "Stripe Checkout of agents."
+[![npm version](https://img.shields.io/npm/v/@clank-stack/agent-embed.svg)](https://www.npmjs.com/package/@clank-stack/agent-embed)
+[![npm license](https://img.shields.io/npm/l/@clank-stack/agent-embed.svg)](./LICENSE)
+[![CI](https://github.com/ZacxDev/clankstack-embed/actions/workflows/ci.yml/badge.svg)](https://github.com/ZacxDev/clankstack-embed/actions/workflows/ci.yml)
 
-Two pieces, one wire contract:
+**Put a streaming AI agent on any website with one `<script>` tag and one element — safely.**
+
+`clankstack-embed` is the public web-integration surface for the clankstack agent
+framework: the "Stripe Checkout of agents." You paste a snippet, point it at a
+broker, and visitors get a streaming agent chat — bounded by an origin allowlist,
+rate limits, and a durable daily spend cap.
+
+> **Project status: early / MVP.** The wire contract is stable and the full
+> browser → broker → gateway path is verified end-to-end, but quotas, the
+> management API, and the Helm chart are young. Read the
+> [security model](#security-model--read-this-before-exposing-a-real-agent) and
+> size your spend caps before exposing a real agent.
+
+## Why a broker?
+
+An agent's OpenClaw gateway is OpenAI-compatible but **ClusterIP-only, has no
+CORS, and rejects mismatched Host/Origin** — so a browser can never reach it
+directly, and you would never want it to (it speaks a privileged, unmetered API).
+The broker is the mandatory, abuse-bounded edge between the public web and your
+gateway: it mints short-lived, origin-bound session tokens, enforces budgets, and
+proxies the streaming chat while injecting the gateway's bearer server-side.
+
+## Two pieces, one wire contract
 
 | Dir | What | Stack | Status |
 |-----|------|-------|--------|
-| [`broker/`](broker/) | Public HTTP service that fronts the agent gateway: mints origin-bound session tokens, enforces budgets, proxies streaming chat. | Go (stdlib + `golang-jwt`) | MVP, builds + tested |
 | [`embed/`](embed/) | `<clankstack-agent>` Lit web component + headless `ClankstackAgent` SDK. Single self-contained ESM bundle for a CDN. | TypeScript + Lit | MVP, builds + tested |
+| [`broker/`](broker/) | Public HTTP service that fronts the agent gateway: mints origin-bound session tokens, enforces budgets, proxies streaming chat. | Go (stdlib + `golang-jwt`) | MVP, builds + tested |
 
-The agent's OpenClaw gateway is OpenAI-compatible but **ClusterIP-only, has no
-CORS, and rejects mismatched Host/Origin** — so the browser can never reach it
-directly. The broker is the mandatory, abuse-bounded edge between them.
+## Architecture
 
 ```
 ┌ host web page ────────────────────────┐
@@ -23,7 +43,7 @@ directly. The broker is the mandatory, abuse-bounded edge between them.
                │ pk_live_…  +  Origin                       (public)
                ▼
 ┌ clankstack-broker ──────────────────────┐
-│ • origin allowlist, rate limit, caps  │   broker/  (Go)                (NEW)
+│ • origin allowlist, rate limit, caps  │   broker/  (Go)
 │ • mint short-lived cs_ session (JWT)  │
 │ • proxy SSE, inject gateway bearer    │
 └──────────────┬────────────────────────┘
@@ -45,14 +65,14 @@ directly. The broker is the mandatory, abuse-bounded edge between them.
 
 **2. Run a broker** (it's what `endpoint` points at).
 
-Kubernetes (Helm):
+Kubernetes — [Helm chart](charts/clankstack-broker/) ([README](charts/clankstack-broker/README.md)):
 ```bash
 helm install broker ./charts/clankstack-broker -n clankstack --create-namespace
 # bundles Postgres (durable spend caps) + auto-generates secrets.
 # enable in-cluster agent resolution + ingress via values — see charts/clankstack-broker/README.md
 ```
 
-Local, no Kubernetes (Docker Compose):
+Local, no Kubernetes — [Docker Compose](docker-compose.yml):
 ```bash
 docker compose up -d        # broker + Postgres on :8090 (edit the secrets first)
 ```
@@ -137,6 +157,14 @@ Stripe `pk_`). But be honest about the boundary:
 - **Never expose a privileged agent** (cluster-admin, shell, write tools) through a
   public embed. The auth model protects your wallet; the agent's own RBAC/tooling
   protects your cluster. Public embeds should map to a sandboxed agent profile.
+- **The browser never sees a gateway credential.** The `cs_` session token is a
+  short-lived, per-visitor JWT held in memory only; the gateway bearer is injected
+  by the broker server-side and never crosses the wire to the page.
+
+The component renders agent output through an XSS-safe markdown pipeline
+([`embed/src/markdown.ts`](embed/src/markdown.ts)): raw HTML in the stream is
+escaped, and a DOM sanitizer strips disallowed elements/attributes and
+`javascript:`/`data:` URLs before anything reaches the shadow root.
 
 ## MVP scope / not yet built
 
@@ -144,8 +172,9 @@ In-memory store + quotas (single-process; `Store` interface is the Postgres seam
 and `turnstile_token` accepted-and-ignored are the main MVP shortcuts. Both
 upstream-resolution modes work: explicit `gateway_url`+`hooks_token` and in-cluster
 `agent_ref` (reads `HOOKS_TOKEN` from the agent's Secret over a stdlib-only kube
-client — broker SA needs `get secrets` in `devpod-*`). Management API has no UI yet
-— Clankup/clawgate would drive it. WebSocket transport, authenticated-embed mode,
-and the self-hosted `clankstack-broker` Helm chart (with the SA/RBAC) are v1 items.
+client — broker SA needs `get secrets` in `devpod-*`). The management API has no UI
+yet. WebSocket transport and authenticated-embed mode are post-MVP items.
 
-See the design spec: `homelab-talos/claudedocs/kubeclaw-embed-webcomponent-auth-spec.md`.
+## License
+
+[MIT](./LICENSE).

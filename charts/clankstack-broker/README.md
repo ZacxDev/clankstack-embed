@@ -1,6 +1,6 @@
 # clankstack-broker (Helm chart)
 
-Deploy the [clankstack](https://github.com/ZacxDev/kubeclaw-embed) embed broker —
+Deploy the [clankstack](https://github.com/ZacxDev/clankstack-embed) embed broker —
 the public edge that fronts your OpenClaw agent gateways and serves the
 `<clankstack-agent>` web component safely (origin-bound publishable-key sessions,
 rate limits, durable daily spend caps).
