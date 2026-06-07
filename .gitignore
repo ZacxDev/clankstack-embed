@@ -1,0 +1,22 @@
+# Node / web component
+**/node_modules/
+embed/dist/
+
+# Go build output
+broker/broker
+broker/kubeclaw-broker
+*.test
+*.out
+
+# Local tooling / scratch
+.venv/
+.playwright-mcp/
+*.log
+.DS_Store
+/tmp/
+
+# Secrets / local env (none should ever be committed)
+*.env
+.env
+*.key
+*.pem

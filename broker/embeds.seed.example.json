@@ -1,0 +1,17 @@
+[
+  {
+    "publishable_key": "pk_live_demo000000000000000000",
+    "status": "enabled",
+    "agent": "Demo Bot",
+    "allowed_origins": ["http://localhost:5173", "https://example.com"],
+    "daily_token_budget": 100000,
+    "per_session_msg_budget": 20,
+    "per_session_tok_budget": 8000,
+    "sessions_per_min": 10,
+    "gateway_url": "http://localhost:18789",
+    "hooks_token": "dev-secret",
+    "title": "Ask the Demo Bot",
+    "greeting": "Hey! Ask me anything.",
+    "theme": { "accent": "#6d28d9", "radius": "12px" }
+  }
+]

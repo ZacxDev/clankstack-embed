@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>kubeclaw — agents on the web</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0; min-height: 100vh; font-family: system-ui, -apple-system, sans-serif;
+        background: radial-gradient(1200px 600px at 50% -10%, #ede9fe 0%, #f8fafc 45%, #f1f5f9 100%);
+        color: #0f172a; display: flex; flex-direction: column; align-items: center;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: radial-gradient(1200px 600px at 50% -10%, #2e1065 0%, #0b1120 50%, #020617 100%); color: #e2e8f0; }
+        .card { background: #0f172a; border-color: #1e293b; }
+        code { background: #1e293b; }
+      }
+      main { width: 100%; max-width: 760px; padding: 4rem 1.25rem 6rem; box-sizing: border-box; }
+      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 .5rem; letter-spacing: -0.02em; }
+      p.lead { font-size: 1.1rem; opacity: .8; margin: 0 0 2rem; }
+      .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.25rem 1.5rem; margin: 1rem 0; }
+      h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin: 0 0 .75rem; }
+      code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 6px; font-size: .9em; }
+      pre { overflow-x: auto; background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 12px; font-size: .85rem; line-height: 1.5; }
+      kubeclaw-agent { --kc-accent: #7c3aed; --kc-radius: 14px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Agents on the web</h1>
+      <p class="lead">
+        This page embeds a live kubeclaw agent with one tag. The chat below talks
+        to a real agent running in-cluster, through the kubeclaw broker — no API
+        keys in the browser, just a publishable key.
+      </p>
+
+      <div class="card">
+        <h2>The whole integration</h2>
+        <pre>&lt;script type="module" src="https://agents.zacx.dev/embed/agent.js"&gt;&lt;/script&gt;
+&lt;kubeclaw-agent
+  publishable-key="pk_live_…"
+  endpoint="https://agents.zacx.dev"
+  mode="inline"&gt;&lt;/kubeclaw-agent&gt;</pre>
+      </div>
+
+      <div class="card">
+        <h2>Live agent</h2>
+        <kubeclaw-agent
+          publishable-key="pk_live_dogfood0000000000000000"
+          endpoint="https://agents.zacx.dev"
+          mode="inline"
+          title="Mellow Otter"
+          greeting="Hi! I'm a real kubeclaw agent — ask me anything."
+        ></kubeclaw-agent>
+      </div>
+    </main>
+
+    <script type="module" src="/embed/agent.js"></script>
+  </body>
+</html>

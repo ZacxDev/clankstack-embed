@@ -1,0 +1,48 @@
+{
+  "name": "@kubeclaw/agent-embed",
+  "version": "0.1.0",
+  "description": "Embeddable web component + headless JS SDK for the kubeclaw agent framework — paste a snippet and get a streaming agent chat on any website.",
+  "type": "module",
+  "main": "./dist/agent.js",
+  "module": "./dist/agent.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/agent.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/agent.js"
+  ],
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "kubeclaw",
+    "agent",
+    "chat",
+    "web-component",
+    "lit",
+    "sse",
+    "embed"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "lit": "^3.2.1",
+    "marked": "^14.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-dts": "^4.3.0",
+    "vitest": "^2.1.8"
+  }
+}
