@@ -1,4 +1,4 @@
-# @clankstack/agent-embed
+# @clank-stack/agent-embed
 
 The **"Stripe Checkout of agents"** — paste a snippet, get a streaming agent chat
 on any website. Ships a self-contained `<clankstack-agent>` web component **and** a
@@ -21,7 +21,7 @@ headless `ClankstackAgent` JS SDK (the "Stripe.js" tier) in a single ESM file.
 ### CDN (paste snippet)
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@clankstack/agent-embed/dist/agent.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@clank-stack/agent-embed/dist/agent.js"></script>
 
 <clankstack-agent
   publishable-key="pk_live_xxx"
@@ -34,13 +34,13 @@ That's it — a floating launcher appears bottom-right.
 ### npm
 
 ```bash
-npm install @clankstack/agent-embed
+npm install @clank-stack/agent-embed
 ```
 
 ```ts
-import '@clankstack/agent-embed'; // registers <clankstack-agent>
+import '@clank-stack/agent-embed'; // registers <clankstack-agent>
 // or, headless only:
-import { ClankstackAgent } from '@clankstack/agent-embed';
+import { ClankstackAgent } from '@clank-stack/agent-embed';
 ```
 
 ---
@@ -142,7 +142,7 @@ Use the wire protocol without any UI. The component is built on top of this — 
 is the single source of truth.
 
 ```ts
-import { ClankstackAgent } from '@clankstack/agent-embed';
+import { ClankstackAgent } from '@clank-stack/agent-embed';
 
 const agent = new ClankstackAgent({
   endpoint: 'https://api.clankstack.dev',
@@ -166,7 +166,7 @@ console.log(agent.config?.title);   // session config after first send
   thrown as a typed `ClankstackError` with `.code` and optional `.status`.
 
 ```ts
-import { ClankstackError } from '@clankstack/agent-embed';
+import { ClankstackError } from '@clank-stack/agent-embed';
 try {
   for await (const d of agent.send('hi')) use(d);
 } catch (e) {

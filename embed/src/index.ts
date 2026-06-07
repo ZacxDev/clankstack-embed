@@ -1,5 +1,5 @@
 /**
- * @clankstack/agent-embed — public entry point.
+ * @clank-stack/agent-embed — public entry point.
  *
  * Importing this module (or loading the built `dist/agent.js` via
  * `<script type="module">`) registers the `<clankstack-agent>` custom element and
