@@ -1,0 +1,30 @@
+name: release-embed
+
+# Tag the component to publish to npm:
+#   git tag embed-v0.1.1 && git push origin embed-v0.1.1
+# Requires an NPM_TOKEN repo secret (an npm *automation* token — bypasses 2FA;
+# create at npmjs.com → Access Tokens → Generate → Automation).
+on:
+  push:
+    tags: ["embed-v*"]
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: embed/package-lock.json
+      - name: build, test, publish
+        working-directory: embed
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

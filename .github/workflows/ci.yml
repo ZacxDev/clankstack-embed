@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [trunk]
+  pull_request:
+
+jobs:
+  broker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache-dependency-path: broker/go.sum
+      - name: build / vet / test
+        working-directory: broker
+        run: |
+          go build ./...
+          go vet ./...
+          go test -race -cover ./...
+
+  embed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: embed/package-lock.json
+      - name: install / typecheck / test / build
+        working-directory: embed
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+          npm run build
+
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: lint + template
+        run: |
+          helm lint ./charts/clankstack-broker
+          helm template t ./charts/clankstack-broker >/dev/null
