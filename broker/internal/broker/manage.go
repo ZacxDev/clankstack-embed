@@ -67,30 +67,24 @@ func (s *Server) handleEmbeds(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) createEmbed(w http.ResponseWriter, r *http.Request) {
-	var req createEmbedRequest
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64*1024)).Decode(&req); err != nil {
-		writeError(w, errBadRequest("invalid JSON body"))
-		return
-	}
+// embedFromCreateRequest validates a createEmbedRequest and builds an Embed. It
+// is shared by the JSON management API and the web admin form so validation and
+// field mapping stay in one place. The returned *apiError (non-nil on failure)
+// already carries the right HTTP status and code.
+func embedFromCreateRequest(req createEmbedRequest) (*Embed, *apiError) {
 	if req.Agent == "" {
-		writeError(w, errBadRequest("agent is required"))
-		return
+		return nil, errBadRequest("agent is required")
 	}
 	if len(req.AllowedOrigins) == 0 {
-		writeError(w, errBadRequest("allowed_origins must contain at least one origin"))
-		return
+		return nil, errBadRequest("allowed_origins must contain at least one origin")
 	}
 	if req.GatewayURL == "" && req.AgentRef == "" {
-		writeError(w, errBadRequest("either gateway_url+hooks_token or agent_ref is required"))
-		return
+		return nil, errBadRequest("either gateway_url+hooks_token or agent_ref is required")
 	}
 	if req.GatewayURL != "" && req.HooksToken == "" {
-		writeError(w, errBadRequest("hooks_token is required when gateway_url is set"))
-		return
+		return nil, errBadRequest("hooks_token is required when gateway_url is set")
 	}
-
-	e := &Embed{
+	return &Embed{
 		Agent:               req.Agent,
 		AllowedOrigins:      req.AllowedOrigins,
 		DailyTokenBudget:    req.DailyTokenBudget,
@@ -105,6 +99,19 @@ func (s *Server) createEmbed(w http.ResponseWriter, r *http.Request) {
 		Title:               req.Title,
 		Greeting:            req.Greeting,
 		Status:              "enabled",
+	}, nil
+}
+
+func (s *Server) createEmbed(w http.ResponseWriter, r *http.Request) {
+	var req createEmbedRequest
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64*1024)).Decode(&req); err != nil {
+		writeError(w, errBadRequest("invalid JSON body"))
+		return
+	}
+	e, aerr := embedFromCreateRequest(req)
+	if aerr != nil {
+		writeError(w, aerr)
+		return
 	}
 	if err := s.store.Create(e); err != nil {
 		s.log.Error("create embed", "err", err)

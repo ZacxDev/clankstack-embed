@@ -67,6 +67,7 @@ type Server struct {
 	gateway         *GatewayClient
 	resolver        GatewayResolver
 	hist            *history
+	admin           *adminSigner
 	secretKey       string
 	upstreamTimeout time.Duration
 
@@ -136,6 +137,7 @@ func New(cfg Config, log *slog.Logger) (*Server, error) {
 		gateway:         gwClient,
 		resolver:        &ExplicitResolver{Fallback: fallback},
 		hist:            newHistory(),
+		admin:           newAdminSigner(cfg.JWTSecret),
 		secretKey:       cfg.SecretKey,
 		upstreamTimeout: cfg.UpstreamTimeout,
 	}
@@ -152,6 +154,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/embeds/", s.handleEmbeds)
 	mux.HandleFunc("/embed/agent.js", s.handleAgentJS)
 	mux.HandleFunc("/demo", s.handleDemo)
+
+	// Web admin UI (server-rendered, cookie-gated). Registered as specific
+	// patterns so they take precedence over the "/" catch-all.
+	mux.HandleFunc("/admin/login", s.handleAdminLogin)
+	mux.HandleFunc("/admin/logout", s.requireAdmin(s.handleAdminLogout))
+	mux.HandleFunc("/admin", s.requireAdmin(s.handleAdminList))
+	mux.HandleFunc("/admin/embeds", s.requireAdmin(s.handleAdminEmbeds))
+	mux.HandleFunc("/admin/embeds/", s.requireAdmin(s.handleAdminEmbeds))
+
 	mux.HandleFunc("/", s.handleRoot)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
