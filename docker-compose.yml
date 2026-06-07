@@ -1,0 +1,47 @@
+# Run the clankstack broker locally (no Kubernetes) — broker + Postgres.
+# In-cluster agent_ref resolution is OFF here, so create embeds in EXPLICIT mode
+# (gateway_url + hooks_token) against an OpenClaw gateway you can reach.
+#
+#   docker compose up -d
+#   # create an embed (sk_ is below):
+#   curl -s -X POST http://localhost:8090/v1/embeds \
+#     -H 'Authorization: Bearer sk_live_change_me' -H 'Content-Type: application/json' \
+#     -d '{"agent":"Demo","allowed_origins":["http://localhost:8080"],
+#          "daily_token_budget":50000,"per_session_msg_budget":20,
+#          "per_session_tok_budget":8000,"sessions_per_min":20,
+#          "gateway_url":"http://host.docker.internal:18789","hooks_token":"<HOOKS_TOKEN>"}'
+#   # then open http://localhost:8090/demo or embed <clankstack-agent endpoint="http://localhost:8090">
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: broker
+      POSTGRES_DB: broker
+      POSTGRES_PASSWORD: broker_local_pw
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U broker -d broker"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  broker:
+    image: ghcr.io/zacxdev/clankstack-broker:0.3.3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # CHANGE THESE before exposing anything publicly.
+      BROKER_JWT_SECRET: change_me_to_a_long_random_string
+      BROKER_SK: sk_live_change_me
+      DATABASE_URL: postgres://broker:broker_local_pw@postgres:5432/broker?sslmode=disable
+      BROKER_KUBE: "off" # no Kubernetes here → explicit-mode embeds only
+    ports:
+      - "8090:8090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # reach a gateway on your host
+
+volumes:
+  pgdata:

@@ -1,7 +1,7 @@
 # kubeclaw-embed
 
-Put a kubeclaw agent on any website with a `<script>` tag and one element —
-safely. This is the public web-integration surface for the kubeclaw agent
+Put a clankstack agent on any website with a `<script>` tag and one element —
+safely. This is the public web-integration surface for the clankstack agent
 framework: the "Stripe Checkout of agents."
 
 Two pieces, one wire contract:
@@ -9,7 +9,7 @@ Two pieces, one wire contract:
 | Dir | What | Stack | Status |
 |-----|------|-------|--------|
 | [`broker/`](broker/) | Public HTTP service that fronts the agent gateway: mints origin-bound session tokens, enforces budgets, proxies streaming chat. | Go (stdlib + `golang-jwt`) | MVP, builds + tested |
-| [`embed/`](embed/) | `<kubeclaw-agent>` Lit web component + headless `KubeclawAgent` SDK. Single self-contained ESM bundle for a CDN. | TypeScript + Lit | MVP, builds + tested |
+| [`embed/`](embed/) | `<clankstack-agent>` Lit web component + headless `ClankstackAgent` SDK. Single self-contained ESM bundle for a CDN. | TypeScript + Lit | MVP, builds + tested |
 
 The agent's OpenClaw gateway is OpenAI-compatible but **ClusterIP-only, has no
 CORS, and rejects mismatched Host/Origin** — so the browser can never reach it
@@ -18,11 +18,11 @@ directly. The broker is the mandatory, abuse-bounded edge between them.
 ```
 ┌ host web page ────────────────────────┐
 │ <script src="cdn/agent.js">           │
-│ <kubeclaw-agent publishable-key=pk_…> │   embed/  (Lit + headless SDK)
+│ <clankstack-agent publishable-key=pk_…> │   embed/  (Lit + headless SDK)
 └──────────────┬────────────────────────┘
                │ pk_live_…  +  Origin                       (public)
                ▼
-┌ kubeclaw-broker ──────────────────────┐
+┌ clankstack-broker ──────────────────────┐
 │ • origin allowlist, rate limit, caps  │   broker/  (Go)                (NEW)
 │ • mint short-lived cs_ session (JWT)  │
 │ • proxy SSE, inject gateway bearer    │
@@ -32,6 +32,41 @@ directly. The broker is the mandatory, abuse-bounded edge between them.
                ▼
         OpenClaw agent gateway  :18789  /v1/chat/completions   (in-cluster)
 ```
+
+## Quick start
+
+**1. Put the agent on a page** (component is on npm + jsDelivr):
+
+```html
+<script type="module"
+  src="https://cdn.jsdelivr.net/npm/@clank-stack/agent-embed/dist/agent.js"></script>
+<clankstack-agent publishable-key="pk_live_…" endpoint="https://your-broker"></clankstack-agent>
+```
+
+**2. Run a broker** (it's what `endpoint` points at).
+
+Kubernetes (Helm):
+```bash
+helm install broker ./charts/clankstack-broker -n clankstack --create-namespace
+# bundles Postgres (durable spend caps) + auto-generates secrets.
+# enable in-cluster agent resolution + ingress via values — see charts/clankstack-broker/README.md
+```
+
+Local, no Kubernetes (Docker Compose):
+```bash
+docker compose up -d        # broker + Postgres on :8090 (edit the secrets first)
+```
+
+**3. Create an embed** to get a `pk_` (management API, Bearer `sk_`):
+```bash
+curl -s -X POST http://<broker>/v1/embeds -H "Authorization: Bearer $SK" \
+  -H 'Content-Type: application/json' \
+  -d '{"agent":"Demo","allowed_origins":["https://yoursite.com"],
+       "daily_token_budget":50000,"per_session_msg_budget":20,"per_session_tok_budget":8000,
+       "sessions_per_min":20,"gateway_url":"http://<agent-gateway>:18789","hooks_token":"<HOOKS_TOKEN>"}'
+```
+
+Image: `ghcr.io/zacxdev/clankstack-broker`. Component: `@clank-stack/agent-embed`.
 
 ## The wire contract (single source of truth)
 
@@ -111,6 +146,6 @@ upstream-resolution modes work: explicit `gateway_url`+`hooks_token` and in-clus
 `agent_ref` (reads `HOOKS_TOKEN` from the agent's Secret over a stdlib-only kube
 client — broker SA needs `get secrets` in `devpod-*`). Management API has no UI yet
 — Clankup/clawgate would drive it. WebSocket transport, authenticated-embed mode,
-and the self-hosted `kubeclaw-broker` Helm chart (with the SA/RBAC) are v1 items.
+and the self-hosted `clankstack-broker` Helm chart (with the SA/RBAC) are v1 items.
 
 See the design spec: `homelab-talos/claudedocs/kubeclaw-embed-webcomponent-auth-spec.md`.

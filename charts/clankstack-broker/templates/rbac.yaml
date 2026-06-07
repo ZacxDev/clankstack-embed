@@ -1,0 +1,61 @@
+{{- if .Values.inClusterResolver.enabled }}
+{{- $fullname := include "clankstack-broker.fullname" . -}}
+{{- $sa := include "clankstack-broker.serviceAccountName" . -}}
+{{- if .Values.inClusterResolver.clusterWide }}
+# Cluster-wide GET on secrets — broad; only for single-tenant clusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $fullname }}-secret-reader
+  labels:
+    {{- include "clankstack-broker.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $fullname }}-secret-reader
+  labels:
+    {{- include "clankstack-broker.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $fullname }}-secret-reader
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sa }}
+    namespace: {{ .Release.Namespace }}
+{{- else }}
+# Least-privilege: GET only the agent Secret, only in the listed namespaces.
+{{- range .Values.inClusterResolver.agentNamespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $fullname }}-secret-reader
+  namespace: {{ . }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: [{{ $.Values.inClusterResolver.secretName | quote }}]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $fullname }}-secret-reader
+  namespace: {{ . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $fullname }}-secret-reader
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sa }}
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clankstack-broker.fullname" . }}
+  labels:
+    {{- include "clankstack-broker.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "clankstack-broker.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: broker
+  template:
+    metadata:
+      labels:
+        {{- include "clankstack-broker.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: broker
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "clankstack-broker.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: broker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - { name: http, containerPort: 8090 }
+          env:
+            - { name: BROKER_ADDR, value: ":8090" }
+            - { name: BROKER_SESSION_TTL, value: {{ .Values.broker.sessionTTL | quote }} }
+            - { name: BROKER_UPSTREAM_TIMEOUT, value: {{ .Values.broker.upstreamTimeout | quote }} }
+            - name: BROKER_JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ include "clankstack-broker.secretName" . }}, key: BROKER_JWT_SECRET }
+            - name: BROKER_SK
+              valueFrom:
+                secretKeyRef: { name: {{ include "clankstack-broker.secretName" . }}, key: BROKER_SK }
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ include "clankstack-broker.secretName" . }}, key: DATABASE_URL, optional: true }
+            {{- if .Values.inClusterResolver.enabled }}
+            - { name: BROKER_KUBE, value: "on" }
+            - { name: BROKER_SECRET_NAME, value: {{ .Values.inClusterResolver.secretName | quote }} }
+            - { name: BROKER_SECRET_KEY, value: {{ .Values.inClusterResolver.secretKey | quote }} }
+            - { name: BROKER_SECRET_TTL, value: {{ .Values.inClusterResolver.secretTTL | quote }} }
+            {{- else }}
+            - { name: BROKER_KUBE, value: "off" }
+            {{- end }}
+            {{- if .Values.embeds }}
+            - { name: BROKER_EMBEDS_SEED, value: /etc/broker/embeds.json }
+            {{- end }}
+          {{- if .Values.embeds }}
+          volumeMounts:
+            - { name: embeds, mountPath: /etc/broker, readOnly: true }
+          {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.embeds }}
+      volumes:
+        - name: embeds
+          secret:
+            secretName: {{ include "clankstack-broker.fullname" . }}-embeds
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

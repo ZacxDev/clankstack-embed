@@ -1,0 +1,87 @@
+# clankstack-broker — default values.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/zacxdev/clankstack-broker
+  # tag defaults to .Chart.appVersion when empty
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+broker:
+  # BROKER_JWT_SECRET (HS256 secret for cs_ session tokens) and BROKER_SK
+  # (sk_live_… management secret). Leave empty to auto-generate stable values on
+  # first install (preserved across upgrades via lookup). Set explicitly to pin.
+  jwtSecret: ""
+  secretKey: ""
+  sessionTTL: 900 # cs_ token TTL (seconds)
+  upstreamTimeout: 120 # hard per-stream timeout (seconds)
+  # Reference a pre-made Secret instead of having the chart manage one. Must
+  # contain BROKER_JWT_SECRET, BROKER_SK, and DATABASE_URL.
+  existingSecret: ""
+
+# Durable daily spend caps live in Postgres. Bundle a small one, or point at an
+# external DB.
+postgres:
+  enabled: true
+  image: postgres:17-alpine
+  password: "" # auto-generated + preserved if empty
+  storage: 1Gi
+  storageClass: ""
+  resources:
+    requests: { cpu: 25m, memory: 64Mi }
+    limits: { cpu: "1", memory: 256Mi }
+# When postgres.enabled=false, set the full DSN here (or via broker.existingSecret):
+externalDatabaseUrl: ""
+
+# In-cluster agent_ref resolution: the broker reads HOOKS_TOKEN from each agent's
+# Secret to derive the gateway bearer. Leave disabled to use explicit-mode embeds
+# (gatewayUrl + hooksToken) only.
+inClusterResolver:
+  enabled: false
+  secretName: devpod-secrets
+  secretKey: HOOKS_TOKEN
+  secretTTL: 5m
+  # RBAC: grant GET on `secretName` in these agent namespaces (least privilege).
+  agentNamespaces: []
+  # Or grant cluster-wide GET on secrets (broad — only for single-tenant clusters).
+  clusterWide: false
+
+# Embeds seeded at startup. Stored in a Secret (may contain hooksToken). For
+# production prefer the management API; this is convenient for a fixed demo.
+# Each item: publishableKey, agent, allowedOrigins[], dailyTokenBudget,
+# perSessionMsgBudget, perSessionTokBudget, sessionsPerMin, and EITHER
+# (gatewayUrl + hooksToken) OR agentRef, plus optional title/greeting/model.
+embeds: []
+
+service:
+  type: ClusterIP
+  port: 8090
+
+ingress:
+  enabled: false
+  className: ""
+  host: ""
+  path: /
+  pathType: Prefix
+  annotations: {}
+  tls: false
+  tlsSecretName: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+resources:
+  requests: { cpu: 25m, memory: 32Mi }
+  limits: { cpu: 500m, memory: 128Mi }
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

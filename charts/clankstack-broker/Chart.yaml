@@ -1,0 +1,20 @@
+apiVersion: v2
+name: clankstack-broker
+description: >-
+  The clankstack embed broker — a public edge that fronts OpenClaw agent
+  gateways and exposes them as a safe, abuse-bounded, embeddable web surface for
+  the <clankstack-agent> web component.
+type: application
+version: 0.1.0
+appVersion: "0.3.3"
+home: https://github.com/ZacxDev/kubeclaw-embed
+sources:
+  - https://github.com/ZacxDev/kubeclaw-embed
+keywords:
+  - clankstack
+  - agent
+  - openclaw
+  - embed
+  - chat
+maintainers:
+  - name: Zach Lowden
