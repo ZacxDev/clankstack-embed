@@ -1,6 +1,7 @@
 # Node / web component
 **/node_modules/
 embed/dist/
+embed/coverage/
 
 # Go build output
 broker/broker
