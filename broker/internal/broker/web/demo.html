@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>kubeclaw — agents on the web</title>
+    <title>clankstack — agents on the web</title>
     <style>
       :root { color-scheme: light dark; }
       body {
@@ -23,36 +23,36 @@
       h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin: 0 0 .75rem; }
       code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 6px; font-size: .9em; }
       pre { overflow-x: auto; background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 12px; font-size: .85rem; line-height: 1.5; }
-      kubeclaw-agent { --kc-accent: #7c3aed; --kc-radius: 14px; }
+      clankstack-agent { --cs-accent: #7c3aed; --cs-radius: 14px; }
     </style>
   </head>
   <body>
     <main>
       <h1>Agents on the web</h1>
       <p class="lead">
-        This page embeds a live kubeclaw agent with one tag. The chat below talks
-        to a real agent running in-cluster, through the kubeclaw broker — no API
+        This page embeds a live clankstack agent with one tag. The chat below talks
+        to a real agent running in-cluster, through the clankstack broker — no API
         keys in the browser, just a publishable key.
       </p>
 
       <div class="card">
         <h2>The whole integration</h2>
         <pre>&lt;script type="module" src="https://agents.zacx.dev/embed/agent.js"&gt;&lt;/script&gt;
-&lt;kubeclaw-agent
+&lt;clankstack-agent
   publishable-key="pk_live_…"
   endpoint="https://agents.zacx.dev"
-  mode="inline"&gt;&lt;/kubeclaw-agent&gt;</pre>
+  mode="inline"&gt;&lt;/clankstack-agent&gt;</pre>
       </div>
 
       <div class="card">
         <h2>Live agent</h2>
-        <kubeclaw-agent
+        <clankstack-agent
           publishable-key="pk_live_dogfood0000000000000000"
           endpoint="https://agents.zacx.dev"
           mode="inline"
-          title="Mellow Otter"
-          greeting="Hi! I'm a real kubeclaw agent — ask me anything."
-        ></kubeclaw-agent>
+          title="Clankstack Demo"
+          greeting="Hi! I'm a real clankstack agent — ask me anything."
+        ></clankstack-agent>
       </div>
     </main>
 
