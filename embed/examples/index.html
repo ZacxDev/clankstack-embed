@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>&lt;kubeclaw-agent&gt; demo</title>
+    <title>&lt;clankstack-agent&gt; demo</title>
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -47,12 +47,12 @@
       }
       /* Theme override via CSS custom properties — works because the element
          exposes them as inheritable :host vars. */
-      kubeclaw-agent.brand {
-        --kc-accent: #0ea5e9;
-        --kc-radius: 10px;
+      clankstack-agent.brand {
+        --cs-accent: #0ea5e9;
+        --cs-radius: 10px;
       }
       /* ::part theming example */
-      kubeclaw-agent.brand::part(header) {
+      clankstack-agent.brand::part(header) {
         background: #0ea5e9;
         color: #fff;
       }
@@ -65,13 +65,13 @@
       The component talks to a BROKER, never the agent gateway directly.
       Point `endpoint` at your locally-running Go broker, e.g.:
           endpoint="http://localhost:8787"
-      Default is https://api.kubeclaw.dev.
+      Default is https://api.clankstack.dev.
     -->
     <script type="module" src="../dist/agent.js"></script>
   </head>
   <body>
     <header>
-      <h1>kubeclaw-agent embed demo</h1>
+      <h1>clankstack-agent embed demo</h1>
       <p>Inline panel + floating popup launcher, with theme overrides.</p>
     </header>
 
@@ -79,7 +79,7 @@
       <div class="card">
         <h2>Inline mode (embedded panel)</h2>
         <div class="inline-host">
-          <kubeclaw-agent
+          <clankstack-agent
             class="brand"
             mode="inline"
             theme="light"
@@ -88,7 +88,7 @@
             title="Docs Assistant"
             greeting="Hey! Ask me anything about the docs."
             placeholder="Ask about the docs…"
-          ></kubeclaw-agent>
+          ></clankstack-agent>
         </div>
       </div>
 
@@ -98,7 +98,7 @@
           Look for the purple chat button in the bottom-right corner. It uses
           the default theme (<code>auto</code>) and persists a visitor id.
         </p>
-        <kubeclaw-agent
+        <clankstack-agent
           mode="popup"
           theme="auto"
           persist-session
@@ -106,7 +106,7 @@
           endpoint="http://localhost:8787"
           title="Sales Bot"
           greeting="👋 Hi! How can I help you today?"
-        ></kubeclaw-agent>
+        ></clankstack-agent>
       </div>
 
       <div class="card">
@@ -122,12 +122,12 @@
         log.scrollTop = log.scrollHeight;
       };
       for (const name of [
-        'kubeclaw:ready',
-        'kubeclaw:session',
-        'kubeclaw:open',
-        'kubeclaw:close',
-        'kubeclaw:message',
-        'kubeclaw:error',
+        'clankstack:ready',
+        'clankstack:session',
+        'clankstack:open',
+        'clankstack:close',
+        'clankstack:message',
+        'clankstack:error',
       ]) {
         document.addEventListener(name, (e) => {
           write(`${name} ${JSON.stringify(e.detail ?? {})}`);

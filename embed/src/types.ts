@@ -1,12 +1,12 @@
 /**
- * Shared types for the kubeclaw agent embed SDK + web component.
+ * Shared types for the clankstack agent embed SDK + web component.
  *
  * These mirror the broker wire contract exactly. A Go broker is built in
  * parallel against the same contract; do not deviate from these shapes.
  */
 
 /** Error codes the broker may return (session exchange or stream error events). */
-export type KubeclawErrorCode =
+export type ClankstackErrorCode =
   | 'origin_denied'
   | 'embed_not_found'
   | 'rate_limited'
@@ -18,15 +18,15 @@ export type KubeclawErrorCode =
   | (string & {});
 
 /** Theme object passed through from the broker config (free-form). */
-export interface KubeclawThemeConfig {
+export interface ClankstackThemeConfig {
   [key: string]: unknown;
 }
 
 /** Config returned by the session exchange and surfaced to the host page. */
-export interface KubeclawSessionConfig {
+export interface ClankstackSessionConfig {
   title: string;
   greeting: string;
-  theme: KubeclawThemeConfig;
+  theme: ClankstackThemeConfig;
   agent: string;
 }
 
@@ -34,13 +34,13 @@ export interface KubeclawSessionConfig {
 export interface SessionExchangeResponse {
   session_token: string;
   expires_in: number;
-  config: KubeclawSessionConfig;
+  config: ClankstackSessionConfig;
 }
 
 /** Error envelope shared by the session exchange and (non-SSE) error bodies. */
 export interface ErrorEnvelope {
   error: {
-    code: KubeclawErrorCode;
+    code: ClankstackErrorCode;
     message: string;
   };
 }
@@ -49,11 +49,11 @@ export interface ErrorEnvelope {
 export type StreamEvent =
   | { type: 'delta'; text: string }
   | { type: 'done' }
-  | { type: 'error'; code: KubeclawErrorCode; message: string };
+  | { type: 'error'; code: ClankstackErrorCode; message: string };
 
-/** Options for constructing the headless {@link KubeclawAgent} client. */
-export interface KubeclawAgentOptions {
-  /** Broker base URL, e.g. https://api.kubeclaw.dev (no trailing slash required). */
+/** Options for constructing the headless {@link ClankstackAgent} client. */
+export interface ClankstackAgentOptions {
+  /** Broker base URL, e.g. https://api.clankstack.dev (no trailing slash required). */
   endpoint?: string;
   /** Publishable key, e.g. pk_live_… */
   publishableKey: string;
@@ -68,15 +68,15 @@ export interface KubeclawAgentOptions {
 }
 
 /** Typed error thrown by the SDK for any broker/transport failure. */
-export class KubeclawError extends Error {
-  readonly code: KubeclawErrorCode;
+export class ClankstackError extends Error {
+  readonly code: ClankstackErrorCode;
   readonly status?: number;
-  constructor(code: KubeclawErrorCode, message: string, status?: number) {
+  constructor(code: ClankstackErrorCode, message: string, status?: number) {
     super(message);
-    this.name = 'KubeclawError';
+    this.name = 'ClankstackError';
     this.code = code;
     this.status = status;
   }
 }
 
-export const DEFAULT_ENDPOINT = 'https://api.kubeclaw.dev';
+export const DEFAULT_ENDPOINT = 'https://api.clankstack.dev';

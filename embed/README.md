@@ -1,11 +1,11 @@
-# @kubeclaw/agent-embed
+# @clankstack/agent-embed
 
 The **"Stripe Checkout of agents"** — paste a snippet, get a streaming agent chat
-on any website. Ships a self-contained `<kubeclaw-agent>` web component **and** a
-headless `KubeclawAgent` JS SDK (the "Stripe.js" tier) in a single ESM file.
+on any website. Ships a self-contained `<clankstack-agent>` web component **and** a
+headless `ClankstackAgent` JS SDK (the "Stripe.js" tier) in a single ESM file.
 
 - **Single file, zero config.** `dist/agent.js` bundles Lit + the SDK + markdown
-  rendering. Drop in a `<script type="module">` and a `<kubeclaw-agent>` tag.
+  rendering. Drop in a `<script type="module">` and a `<clankstack-agent>` tag.
 - **Shadow DOM** for full style encapsulation; theme via CSS custom properties and
   `::part()`.
 - **Streaming** via `fetch` + a robust SSE parser (not `EventSource` — we need to
@@ -21,12 +21,12 @@ headless `KubeclawAgent` JS SDK (the "Stripe.js" tier) in a single ESM file.
 ### CDN (paste snippet)
 
 ```html
-<script type="module" src="https://cdn.kubeclaw.dev/agent.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@clankstack/agent-embed/dist/agent.js"></script>
 
-<kubeclaw-agent
+<clankstack-agent
   publishable-key="pk_live_xxx"
   mode="popup"
-></kubeclaw-agent>
+></clankstack-agent>
 ```
 
 That's it — a floating launcher appears bottom-right.
@@ -34,25 +34,25 @@ That's it — a floating launcher appears bottom-right.
 ### npm
 
 ```bash
-npm install @kubeclaw/agent-embed
+npm install @clankstack/agent-embed
 ```
 
 ```ts
-import '@kubeclaw/agent-embed'; // registers <kubeclaw-agent>
+import '@clankstack/agent-embed'; // registers <clankstack-agent>
 // or, headless only:
-import { KubeclawAgent } from '@kubeclaw/agent-embed';
+import { ClankstackAgent } from '@clankstack/agent-embed';
 ```
 
 ---
 
-## Component: `<kubeclaw-agent>`
+## Component: `<clankstack-agent>`
 
 ### Attributes / properties
 
 | Attribute          | Type                              | Default                     | Description |
 |--------------------|-----------------------------------|-----------------------------|-------------|
 | `publishable-key`  | string (**required**)             | —                           | `pk_live_…` key. |
-| `endpoint`         | string                            | `https://api.kubeclaw.dev`  | Broker base URL. |
+| `endpoint`         | string                            | `https://api.clankstack.dev`  | Broker base URL. |
 | `agent`            | string                            | —                           | Optional display override (the broker config also provides one). |
 | `mode`             | `inline` \| `popup` \| `fullscreen` | `popup`                   | Embedded panel, floating launcher, or full-screen. |
 | `theme`            | `light` \| `dark` \| `auto`       | `auto`                      | `auto` follows `prefers-color-scheme`. |
@@ -67,22 +67,22 @@ All are `CustomEvent`, **bubbling + composed** (cross shadow boundaries):
 
 | Event              | `detail`                          |
 |--------------------|-----------------------------------|
-| `kubeclaw:ready`   | `{}` — element initialized.       |
-| `kubeclaw:session` | the `config` object from the session exchange. |
-| `kubeclaw:open`    | `{}` — panel opened.              |
-| `kubeclaw:close`   | `{}` — panel closed.             |
-| `kubeclaw:message` | `{ role: 'user' \| 'assistant', content: string }` |
-| `kubeclaw:error`   | `{ code: string, message: string }` |
+| `clankstack:ready`   | `{}` — element initialized.       |
+| `clankstack:session` | the `config` object from the session exchange. |
+| `clankstack:open`    | `{}` — panel opened.              |
+| `clankstack:close`   | `{}` — panel closed.             |
+| `clankstack:message` | `{ role: 'user' \| 'assistant', content: string }` |
+| `clankstack:error`   | `{ code: string, message: string }` |
 
 ```js
-document.querySelector('kubeclaw-agent')
-  .addEventListener('kubeclaw:message', (e) => console.log(e.detail));
+document.querySelector('clankstack-agent')
+  .addEventListener('clankstack:message', (e) => console.log(e.detail));
 ```
 
 ### Methods (imperative API)
 
 ```ts
-const el = document.querySelector('kubeclaw-agent');
+const el = document.querySelector('clankstack-agent');
 el.open();
 el.close();
 el.reset();                 // clear transcript + drop session
@@ -94,29 +94,29 @@ await el.sendMessage('hi'); // programmatically send
 **CSS custom properties** (set on the element or any ancestor — they're inherited):
 
 ```css
-kubeclaw-agent {
-  --kc-accent: #0ea5e9;
-  --kc-accent-fg: #ffffff;
-  --kc-radius: 12px;
-  --kc-font: 'Inter', sans-serif;
-  --kc-bg: #ffffff;
-  --kc-fg: #1f2330;
-  --kc-surface: #f4f5f7;   /* assistant bubbles / header */
-  --kc-surface-2: #eceef1; /* code blocks, hovers */
-  --kc-border: #e2e4e9;
-  --kc-muted: #6b7280;
+clankstack-agent {
+  --cs-accent: #0ea5e9;
+  --cs-accent-fg: #ffffff;
+  --cs-radius: 12px;
+  --cs-font: 'Inter', sans-serif;
+  --cs-bg: #ffffff;
+  --cs-fg: #1f2330;
+  --cs-surface: #f4f5f7;   /* assistant bubbles / header */
+  --cs-surface-2: #eceef1; /* code blocks, hovers */
+  --cs-border: #e2e4e9;
+  --cs-muted: #6b7280;
 }
 ```
 
 **`::part()`** for structural overrides:
 
 ```css
-kubeclaw-agent::part(launcher) { box-shadow: none; }
-kubeclaw-agent::part(panel)    { border-radius: 4px; }
-kubeclaw-agent::part(header)   { background: #111; color: #fff; }
-kubeclaw-agent::part(messages) { padding: 24px; }
-kubeclaw-agent::part(input)    { font-size: 16px; }
-kubeclaw-agent::part(send)     { background: #000; }
+clankstack-agent::part(launcher) { box-shadow: none; }
+clankstack-agent::part(panel)    { border-radius: 4px; }
+clankstack-agent::part(header)   { background: #111; color: #fff; }
+clankstack-agent::part(messages) { padding: 24px; }
+clankstack-agent::part(input)    { font-size: 16px; }
+clankstack-agent::part(send)     { background: #000; }
 ```
 
 Exposed parts: `launcher`, `panel`, `header`, `close`, `messages`, `message`,
@@ -136,16 +136,16 @@ higher specificity than the inline vars we set.
 
 ---
 
-## Headless SDK: `KubeclawAgent`
+## Headless SDK: `ClankstackAgent`
 
 Use the wire protocol without any UI. The component is built on top of this — it
 is the single source of truth.
 
 ```ts
-import { KubeclawAgent } from '@kubeclaw/agent-embed';
+import { ClankstackAgent } from '@clankstack/agent-embed';
 
-const agent = new KubeclawAgent({
-  endpoint: 'https://api.kubeclaw.dev',
+const agent = new ClankstackAgent({
+  endpoint: 'https://api.clankstack.dev',
   publishableKey: 'pk_live_xxx',
 });
 
@@ -163,14 +163,14 @@ console.log(agent.config?.title);   // session config after first send
 - On session expiry (`401` / `session_expired`) it re-runs the session exchange
   **once** and retries the stream transparently.
 - Errors (origin denied, quota, rate limit, stream `error` events, network) are
-  thrown as a typed `KubeclawError` with `.code` and optional `.status`.
+  thrown as a typed `ClankstackError` with `.code` and optional `.status`.
 
 ```ts
-import { KubeclawError } from '@kubeclaw/agent-embed';
+import { ClankstackError } from '@clankstack/agent-embed';
 try {
   for await (const d of agent.send('hi')) use(d);
 } catch (e) {
-  if (e instanceof KubeclawError && e.code === 'rate_limited') backOff();
+  if (e instanceof ClankstackError && e.code === 'rate_limited') backOff();
 }
 ```
 
@@ -246,11 +246,11 @@ Open `examples/index.html` after building to see inline + popup modes. Point
 
 | File                      | Purpose |
 |---------------------------|---------|
-| `src/types.ts`            | Wire-contract types + `KubeclawError`. |
+| `src/types.ts`            | Wire-contract types + `ClankstackError`. |
 | `src/sse.ts`              | Streaming SSE line parser (unit-tested). |
 | `src/client.ts`          | Headless SDK + session/stream logic. |
 | `src/markdown.ts`         | XSS-safe markdown rendering (`marked` + sanitizer). |
-| `src/kubeclaw-agent.ts`   | The Lit custom element (built on the SDK). |
+| `src/clankstack-agent.ts`   | The Lit custom element (built on the SDK). |
 | `src/index.ts`            | Exports + `customElements.define`. |
 
 ## Security note

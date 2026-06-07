@@ -1,7 +1,7 @@
 /**
- * <kubeclaw-agent> — embeddable streaming agent chat web component.
+ * <clankstack-agent> — embeddable streaming agent chat web component.
  *
- * Built on top of the headless {@link KubeclawAgent} SDK (single source of
+ * Built on top of the headless {@link ClankstackAgent} SDK (single source of
  * truth for the wire protocol). Shadow DOM for full style encapsulation;
  * theming via CSS custom properties and ::part() hooks.
  */
@@ -10,9 +10,9 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { classMap } from 'lit/directives/class-map.js';
-import { KubeclawAgent } from './client.js';
+import { ClankstackAgent } from './client.js';
 import { renderMarkdown } from './markdown.js';
-import { KubeclawError, type KubeclawSessionConfig } from './types.js';
+import { ClankstackError, type ClankstackSessionConfig } from './types.js';
 
 type Mode = 'inline' | 'popup' | 'fullscreen';
 type ThemeAttr = 'light' | 'dark' | 'auto';
@@ -29,15 +29,15 @@ interface ChatMessage {
   error?: boolean;
 }
 
-const VISITOR_KEY = 'kubeclaw:visitor_id';
+const VISITOR_KEY = 'clankstack:visitor_id';
 
 let messageSeq = 0;
 
-@customElement('kubeclaw-agent')
-export class KubeclawAgentElement extends LitElement {
+@customElement('clankstack-agent')
+export class ClankstackAgentElement extends LitElement {
   // ---- Public reactive attributes ----
   @property({ attribute: 'publishable-key' }) publishableKey = '';
-  @property() endpoint = 'https://api.kubeclaw.dev';
+  @property() endpoint = 'https://api.clankstack.dev';
   @property() agent = '';
   @property() mode: Mode = 'popup';
   @property() theme: ThemeAttr = 'auto';
@@ -55,41 +55,41 @@ export class KubeclawAgentElement extends LitElement {
   @state() private resolvedGreeting = '';
   @state() private draft = '';
 
-  private client: KubeclawAgent | null = null;
-  private sessionConfig: KubeclawSessionConfig | null = null;
+  private client: ClankstackAgent | null = null;
+  private sessionConfig: ClankstackSessionConfig | null = null;
   private abortStream: (() => void) | null = null;
 
   static override styles = css`
     :host {
-      --kc-accent: #6d28d9;
-      --kc-accent-fg: #ffffff;
-      --kc-radius: 16px;
-      --kc-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+      --cs-accent: #6d28d9;
+      --cs-accent-fg: #ffffff;
+      --cs-radius: 16px;
+      --cs-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
         Arial, sans-serif;
-      --kc-bg: #ffffff;
-      --kc-fg: #1f2330;
-      --kc-surface: #f4f5f7;
-      --kc-surface-2: #eceef1;
-      --kc-border: #e2e4e9;
-      --kc-muted: #6b7280;
-      --kc-user-bg: var(--kc-accent);
-      --kc-user-fg: var(--kc-accent-fg);
-      --kc-shadow: 0 12px 40px rgba(15, 18, 30, 0.18);
-      --kc-z: 2147483000;
+      --cs-bg: #ffffff;
+      --cs-fg: #1f2330;
+      --cs-surface: #f4f5f7;
+      --cs-surface-2: #eceef1;
+      --cs-border: #e2e4e9;
+      --cs-muted: #6b7280;
+      --cs-user-bg: var(--cs-accent);
+      --cs-user-fg: var(--cs-accent-fg);
+      --cs-shadow: 0 12px 40px rgba(15, 18, 30, 0.18);
+      --cs-z: 2147483000;
 
-      font-family: var(--kc-font);
-      color: var(--kc-fg);
+      font-family: var(--cs-font);
+      color: var(--cs-fg);
       box-sizing: border-box;
     }
     :host([theme='dark']),
     :host([data-resolved-theme='dark']) {
-      --kc-bg: #16181d;
-      --kc-fg: #f2f3f5;
-      --kc-surface: #21242b;
-      --kc-surface-2: #2a2e37;
-      --kc-border: #353a44;
-      --kc-muted: #9aa1ad;
-      --kc-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      --cs-bg: #16181d;
+      --cs-fg: #f2f3f5;
+      --cs-surface: #21242b;
+      --cs-surface-2: #2a2e37;
+      --cs-border: #353a44;
+      --cs-muted: #9aa1ad;
+      --cs-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     }
     *,
     *::before,
@@ -106,20 +106,20 @@ export class KubeclawAgentElement extends LitElement {
       height: 56px;
       border-radius: 50%;
       border: none;
-      background: var(--kc-accent);
-      color: var(--kc-accent-fg);
+      background: var(--cs-accent);
+      color: var(--cs-accent-fg);
       cursor: pointer;
-      box-shadow: var(--kc-shadow);
+      box-shadow: var(--cs-shadow);
       display: grid;
       place-items: center;
-      z-index: var(--kc-z);
+      z-index: var(--cs-z);
       transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
     .launcher:hover {
       transform: translateY(-2px) scale(1.03);
     }
     .launcher:focus-visible {
-      outline: 3px solid var(--kc-accent);
+      outline: 3px solid var(--cs-accent);
       outline-offset: 3px;
     }
     .launcher svg {
@@ -131,11 +131,11 @@ export class KubeclawAgentElement extends LitElement {
     .panel {
       display: flex;
       flex-direction: column;
-      background: var(--kc-bg);
-      color: var(--kc-fg);
-      border: 1px solid var(--kc-border);
-      border-radius: var(--kc-radius);
-      box-shadow: var(--kc-shadow);
+      background: var(--cs-bg);
+      color: var(--cs-fg);
+      border: 1px solid var(--cs-border);
+      border-radius: var(--cs-radius);
+      box-shadow: var(--cs-shadow);
       overflow: hidden;
       min-height: 0;
     }
@@ -145,7 +145,7 @@ export class KubeclawAgentElement extends LitElement {
       right: 20px;
       width: min(384px, calc(100vw - 40px));
       height: min(560px, calc(100vh - 120px));
-      z-index: var(--kc-z);
+      z-index: var(--cs-z);
       transform-origin: bottom right;
       animation: kc-pop 0.18s ease;
     }
@@ -162,7 +162,7 @@ export class KubeclawAgentElement extends LitElement {
       height: 100vh;
       border-radius: 0;
       border: none;
-      z-index: var(--kc-z);
+      z-index: var(--cs-z);
     }
     @keyframes kc-pop {
       from {
@@ -188,8 +188,8 @@ export class KubeclawAgentElement extends LitElement {
       align-items: center;
       gap: 10px;
       padding: 14px 16px;
-      background: var(--kc-surface);
-      border-bottom: 1px solid var(--kc-border);
+      background: var(--cs-surface);
+      border-bottom: 1px solid var(--cs-border);
       flex: 0 0 auto;
     }
     .header .dot {
@@ -209,12 +209,12 @@ export class KubeclawAgentElement extends LitElement {
     }
     .header .agent {
       font-size: 12px;
-      color: var(--kc-muted);
+      color: var(--cs-muted);
     }
     .icon-btn {
       background: transparent;
       border: none;
-      color: var(--kc-muted);
+      color: var(--cs-muted);
       cursor: pointer;
       padding: 4px;
       border-radius: 8px;
@@ -222,11 +222,11 @@ export class KubeclawAgentElement extends LitElement {
       place-items: center;
     }
     .icon-btn:hover {
-      background: var(--kc-surface-2);
-      color: var(--kc-fg);
+      background: var(--cs-surface-2);
+      color: var(--cs-fg);
     }
     .icon-btn:focus-visible {
-      outline: 2px solid var(--kc-accent);
+      outline: 2px solid var(--cs-accent);
     }
 
     /* ---- Messages ---- */
@@ -261,12 +261,12 @@ export class KubeclawAgentElement extends LitElement {
       overflow-wrap: anywhere;
     }
     .bubble.assistant {
-      background: var(--kc-surface);
+      background: var(--cs-surface);
       border-top-left-radius: 4px;
     }
     .bubble.user {
-      background: var(--kc-user-bg);
-      color: var(--kc-user-fg);
+      background: var(--cs-user-bg);
+      color: var(--cs-user-fg);
       border-top-right-radius: 4px;
     }
     .bubble.error {
@@ -290,7 +290,7 @@ export class KubeclawAgentElement extends LitElement {
       margin: 0 0 8px;
     }
     .bubble pre {
-      background: var(--kc-surface-2);
+      background: var(--cs-surface-2);
       padding: 10px;
       border-radius: 8px;
       overflow-x: auto;
@@ -301,12 +301,12 @@ export class KubeclawAgentElement extends LitElement {
       font-size: 0.9em;
     }
     .bubble :not(pre) > code {
-      background: var(--kc-surface-2);
+      background: var(--cs-surface-2);
       padding: 1px 5px;
       border-radius: 5px;
     }
     .bubble a {
-      color: var(--kc-accent);
+      color: var(--cs-accent);
     }
     .bubble ul,
     .bubble ol {
@@ -325,7 +325,7 @@ export class KubeclawAgentElement extends LitElement {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--kc-muted);
+      background: var(--cs-muted);
       animation: kc-blink 1.2s infinite ease-in-out both;
     }
     .typing span:nth-child(2) {
@@ -357,27 +357,27 @@ export class KubeclawAgentElement extends LitElement {
       gap: 8px;
       align-items: flex-end;
       padding: 12px;
-      border-top: 1px solid var(--kc-border);
-      background: var(--kc-bg);
+      border-top: 1px solid var(--cs-border);
+      background: var(--cs-bg);
       flex: 0 0 auto;
     }
     .input {
       flex: 1 1 auto;
       resize: none;
-      border: 1px solid var(--kc-border);
+      border: 1px solid var(--cs-border);
       border-radius: 12px;
       padding: 9px 12px;
       font-family: inherit;
       font-size: 14px;
       line-height: 1.4;
       max-height: 120px;
-      background: var(--kc-bg);
-      color: var(--kc-fg);
+      background: var(--cs-bg);
+      color: var(--cs-fg);
       outline: none;
     }
     .input:focus {
-      border-color: var(--kc-accent);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--kc-accent) 20%, transparent);
+      border-color: var(--cs-accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--cs-accent) 20%, transparent);
     }
     .input:disabled {
       opacity: 0.6;
@@ -388,8 +388,8 @@ export class KubeclawAgentElement extends LitElement {
       height: 40px;
       border-radius: 50%;
       border: none;
-      background: var(--kc-accent);
-      color: var(--kc-accent-fg);
+      background: var(--cs-accent);
+      color: var(--cs-accent-fg);
       cursor: pointer;
       display: grid;
       place-items: center;
@@ -399,7 +399,7 @@ export class KubeclawAgentElement extends LitElement {
       cursor: not-allowed;
     }
     .send:focus-visible {
-      outline: 2px solid var(--kc-accent);
+      outline: 2px solid var(--cs-accent);
       outline-offset: 2px;
     }
     .send svg {
@@ -409,7 +409,7 @@ export class KubeclawAgentElement extends LitElement {
     .footer {
       text-align: center;
       font-size: 10.5px;
-      color: var(--kc-muted);
+      color: var(--cs-muted);
       padding: 0 0 8px;
     }
     .sr-only {
@@ -477,11 +477,11 @@ export class KubeclawAgentElement extends LitElement {
   private bootstrap(): void {
     if (!this.publishableKey) {
       // eslint-disable-next-line no-console
-      console.error('[kubeclaw-agent] publishable-key attribute is required');
+      console.error('[clankstack-agent] publishable-key attribute is required');
       return;
     }
     const visitorId = this.persistSession ? this.getVisitorId() : undefined;
-    this.client = new KubeclawAgent({
+    this.client = new ClankstackAgent({
       endpoint: this.endpoint,
       publishableKey: this.publishableKey,
       ...(visitorId ? { visitorId } : {}),
@@ -489,7 +489,7 @@ export class KubeclawAgentElement extends LitElement {
     this.resolvedTitle = this.title || 'Assistant';
     this.resolvedGreeting = this.greeting;
     this.ready = true;
-    this.emit('kubeclaw:ready', {});
+    this.emit('clankstack:ready', {});
   }
 
   private getVisitorId(): string {
@@ -515,23 +515,23 @@ export class KubeclawAgentElement extends LitElement {
       if (!this.title && cfg.title) this.resolvedTitle = cfg.title;
       if (!this.greeting && cfg.greeting) this.resolvedGreeting = cfg.greeting;
       this.applyThemeConfig(cfg.theme);
-      this.emit('kubeclaw:session', cfg);
+      this.emit('clankstack:session', cfg);
       this.seedGreeting();
     } catch (e) {
       this.handleError(e);
     }
   }
 
-  private applyThemeConfig(theme: KubeclawSessionConfig['theme']): void {
+  private applyThemeConfig(theme: ClankstackSessionConfig['theme']): void {
     if (!theme || typeof theme !== 'object') return;
     const map: Record<string, string> = {
-      accent: '--kc-accent',
-      accentFg: '--kc-accent-fg',
-      radius: '--kc-radius',
-      font: '--kc-font',
-      bg: '--kc-bg',
-      fg: '--kc-fg',
-      surface: '--kc-surface',
+      accent: '--cs-accent',
+      accentFg: '--cs-accent-fg',
+      radius: '--cs-radius',
+      font: '--cs-font',
+      bg: '--cs-bg',
+      fg: '--cs-fg',
+      surface: '--cs-surface',
     };
     for (const [key, cssVar] of Object.entries(map)) {
       const v = (theme as Record<string, unknown>)[key];
@@ -556,14 +556,14 @@ export class KubeclawAgentElement extends LitElement {
     if (this.open_) return;
     this.open_ = true;
     void this.ensureConfig();
-    this.emit('kubeclaw:open', {});
+    this.emit('clankstack:open', {});
     this.updateComplete.then(() => this.focusInput());
   }
 
   close(): void {
     if (!this.open_) return;
     this.open_ = false;
-    this.emit('kubeclaw:close', {});
+    this.emit('clankstack:close', {});
   }
 
   reset(): void {
@@ -594,7 +594,7 @@ export class KubeclawAgentElement extends LitElement {
     };
     this.messages = [...this.messages, userMsg, assistantMsg];
     this.streaming = true;
-    this.emit('kubeclaw:message', { role: 'user', content: trimmed });
+    this.emit('clankstack:message', { role: 'user', content: trimmed });
     this.scrollToBottom();
 
     let aborted = false;
@@ -612,7 +612,7 @@ export class KubeclawAgentElement extends LitElement {
       }
       if (!aborted) {
         this.bumpMessage(assistantMsg.id, { streaming: false });
-        this.emit('kubeclaw:message', {
+        this.emit('clankstack:message', {
           role: 'assistant',
           content: assistantMsg.content,
         });
@@ -635,19 +635,19 @@ export class KubeclawAgentElement extends LitElement {
 
   private handleError(e: unknown): void {
     const err =
-      e instanceof KubeclawError
+      e instanceof ClankstackError
         ? e
-        : new KubeclawError('internal_error', (e as Error)?.message ?? 'Unknown error');
+        : new ClankstackError('internal_error', (e as Error)?.message ?? 'Unknown error');
     const friendly = this.friendlyError(err);
     this.messages = [
       ...this.messages,
       { id: ++messageSeq, role: 'assistant', content: friendly, error: true },
     ];
-    this.emit('kubeclaw:error', { code: err.code, message: err.message });
+    this.emit('clankstack:error', { code: err.code, message: err.message });
     this.scrollToBottom();
   }
 
-  private friendlyError(err: KubeclawError): string {
+  private friendlyError(err: ClankstackError): string {
     switch (err.code) {
       case 'quota_exceeded':
       case 'session_quota_exceeded':
@@ -867,6 +867,6 @@ function sendIcon() {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'kubeclaw-agent': KubeclawAgentElement;
+    'clankstack-agent': ClankstackAgentElement;
   }
 }

@@ -1,29 +1,29 @@
 /**
- * Headless kubeclaw agent SDK ("Stripe.js" tier).
+ * Headless clankstack agent SDK ("Stripe.js" tier).
  *
  * Single source of truth for the broker wire contract. The web component is
  * built on top of this client. Usage:
  *
  * ```ts
- * const agent = new KubeclawAgent({ endpoint, publishableKey });
+ * const agent = new ClankstackAgent({ endpoint, publishableKey });
  * for await (const delta of agent.send('hello')) renderToken(delta);
  * ```
  *
  * `send(text)` returns an async iterable of text deltas. It bootstraps a
  * session lazily, retries once on session expiry (401 / session_expired), and
- * surfaces all failures as thrown {@link KubeclawError}s.
+ * surfaces all failures as thrown {@link ClankstackError}s.
  */
 import { parseSSEStream } from './sse.js';
 import {
   DEFAULT_ENDPOINT,
-  KubeclawError,
-  type KubeclawAgentOptions,
-  type KubeclawSessionConfig,
+  ClankstackError,
+  type ClankstackAgentOptions,
+  type ClankstackSessionConfig,
   type SessionExchangeResponse,
   type StreamEvent,
 } from './types.js';
 
-/** Result handle returned by {@link KubeclawAgent.send}. */
+/** Result handle returned by {@link ClankstackAgent.send}. */
 export interface SendResult extends AsyncIterable<string> {
   /** Resolves to the fully assembled assistant text once the stream is done. */
   readonly text: Promise<string>;
@@ -44,20 +44,20 @@ function isErrorEnvelope(v: unknown): v is { error: { code: string; message: str
   );
 }
 
-export class KubeclawAgent {
+export class ClankstackAgent {
   readonly endpoint: string;
   readonly publishableKey: string;
   private readonly fetchImpl: typeof fetch;
   private readonly visitorId: string | undefined;
 
   private sessionToken: string | null = null;
-  private sessionConfig: KubeclawSessionConfig | null = null;
+  private sessionConfig: ClankstackSessionConfig | null = null;
   /** De-dupes concurrent session exchanges. */
   private sessionInflight: Promise<SessionExchangeResponse> | null = null;
 
-  constructor(options: KubeclawAgentOptions) {
+  constructor(options: ClankstackAgentOptions) {
     if (!options.publishableKey) {
-      throw new KubeclawError('invalid_request', 'publishableKey is required');
+      throw new ClankstackError('invalid_request', 'publishableKey is required');
     }
     this.endpoint = options.endpoint?.trim() || DEFAULT_ENDPOINT;
     this.publishableKey = options.publishableKey;
@@ -65,13 +65,13 @@ export class KubeclawAgent {
     // Bind so the user can pass a bare `fetch`.
     const impl = options.fetchImpl ?? globalThis.fetch;
     if (typeof impl !== 'function') {
-      throw new KubeclawError('internal_error', 'No fetch implementation available');
+      throw new ClankstackError('internal_error', 'No fetch implementation available');
     }
     this.fetchImpl = impl.bind(globalThis);
   }
 
   /** The session config from the last successful exchange, if any. */
-  get config(): KubeclawSessionConfig | null {
+  get config(): ClankstackSessionConfig | null {
     return this.sessionConfig;
   }
 
@@ -91,7 +91,7 @@ export class KubeclawAgent {
    * Ensure a valid session exists, performing the session exchange if needed.
    * Returns the session config. De-dupes concurrent callers.
    */
-  async ensureSession(force = false): Promise<KubeclawSessionConfig> {
+  async ensureSession(force = false): Promise<ClankstackSessionConfig> {
     if (!force && this.sessionToken && this.sessionConfig) {
       return this.sessionConfig;
     }
@@ -123,7 +123,7 @@ export class KubeclawAgent {
         credentials: 'omit',
       });
     } catch (e) {
-      throw new KubeclawError(
+      throw new ClankstackError(
         'internal_error',
         `Network error during session exchange: ${(e as Error).message}`,
       );
@@ -137,11 +137,11 @@ export class KubeclawAgent {
     try {
       json = await resp.json();
     } catch {
-      throw new KubeclawError('internal_error', 'Malformed session response', resp.status);
+      throw new ClankstackError('internal_error', 'Malformed session response', resp.status);
     }
     const data = json as SessionExchangeResponse;
     if (!data || typeof data.session_token !== 'string' || !data.config) {
-      throw new KubeclawError('internal_error', 'Invalid session response shape', resp.status);
+      throw new ClankstackError('internal_error', 'Invalid session response shape', resp.status);
     }
 
     this.sessionToken = data.session_token;
@@ -149,7 +149,7 @@ export class KubeclawAgent {
     return data;
   }
 
-  private async errorFromResponse(resp: Response, fallback: string): Promise<KubeclawError> {
+  private async errorFromResponse(resp: Response, fallback: string): Promise<ClankstackError> {
     let code = 'internal_error';
     let message = fallback;
     try {
@@ -163,7 +163,7 @@ export class KubeclawAgent {
     }
     if (resp.status === 401 && code === 'internal_error') code = 'session_expired';
     if (resp.status === 429 && code === 'internal_error') code = 'rate_limited';
-    return new KubeclawError(code, message, resp.status);
+    return new ClankstackError(code, message, resp.status);
   }
 
   /**
@@ -193,7 +193,7 @@ export class KubeclawAgent {
         try {
           stream = await self.openChatStream(message);
         } catch (e) {
-          if (e instanceof KubeclawError && self.isExpiry(e)) {
+          if (e instanceof ClankstackError && self.isExpiry(e)) {
             await self.ensureSession(true);
             stream = await self.openChatStream(message);
           } else {
@@ -218,7 +218,7 @@ export class KubeclawAgent {
           } else if (evt.type === 'done') {
             break;
           } else if (evt.type === 'error') {
-            throw new KubeclawError(evt.code, evt.message);
+            throw new ClankstackError(evt.code, evt.message);
           }
         }
         resolveText(assembled);
@@ -235,13 +235,13 @@ export class KubeclawAgent {
     };
   }
 
-  private isExpiry(e: KubeclawError): boolean {
+  private isExpiry(e: ClankstackError): boolean {
     return e.status === 401 || e.code === 'session_expired';
   }
 
   private async openChatStream(message: string): Promise<ReadableStream<Uint8Array>> {
     if (!this.sessionToken) {
-      throw new KubeclawError('session_expired', 'No active session');
+      throw new ClankstackError('session_expired', 'No active session');
     }
     const url = joinUrl(this.endpoint, '/v1/embed/chat');
     let resp: Response;
@@ -256,20 +256,20 @@ export class KubeclawAgent {
         credentials: 'omit',
       });
     } catch (e) {
-      throw new KubeclawError(
+      throw new ClankstackError(
         'internal_error',
         `Network error during chat stream: ${(e as Error).message}`,
       );
     }
 
     if (resp.status === 401) {
-      throw new KubeclawError('session_expired', 'Session expired', 401);
+      throw new ClankstackError('session_expired', 'Session expired', 401);
     }
     if (!resp.ok) {
       throw await this.errorFromResponse(resp, 'Chat request failed');
     }
     if (!resp.body) {
-      throw new KubeclawError('internal_error', 'Chat response had no body');
+      throw new ClankstackError('internal_error', 'Chat response had no body');
     }
     return resp.body;
   }

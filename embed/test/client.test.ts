@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { KubeclawAgent } from '../src/client.js';
-import { KubeclawError } from '../src/types.js';
+import { ClankstackAgent } from '../src/client.js';
+import { ClankstackError } from '../src/types.js';
 
 const ENDPOINT = 'https://broker.test';
 const PK = 'pk_live_test123';
@@ -39,7 +39,7 @@ function goodSession() {
   };
 }
 
-describe('KubeclawAgent.send', () => {
+describe('ClankstackAgent.send', () => {
   it('performs session exchange then streams deltas', async () => {
     const calls: Array<{ url: string; init: RequestInit }> = [];
     const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
@@ -52,7 +52,7 @@ describe('KubeclawAgent.send', () => {
       );
     }) as unknown as typeof fetch;
 
-    const agent = new KubeclawAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
+    const agent = new ClankstackAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
     const result = agent.send('hi');
     const deltas: string[] = [];
     for await (const d of result) deltas.push(d);
@@ -89,7 +89,7 @@ describe('KubeclawAgent.send', () => {
       return sseResponse('{"type":"delta","text":"x"}', '{"type":"done"}');
     }) as unknown as typeof fetch;
 
-    const agent = new KubeclawAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
+    const agent = new ClankstackAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
     for await (const _ of agent.send('a')) void _;
     for await (const _ of agent.send('b')) void _;
     expect(sessionCount).toBe(1);
@@ -113,7 +113,7 @@ describe('KubeclawAgent.send', () => {
       return sseResponse('{"type":"delta","text":"ok"}', '{"type":"done"}');
     }) as unknown as typeof fetch;
 
-    const agent = new KubeclawAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
+    const agent = new ClankstackAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
     const deltas: string[] = [];
     for await (const d of agent.send('hi')) deltas.push(d);
 
@@ -128,7 +128,7 @@ describe('KubeclawAgent.send', () => {
       return sseResponse('{"type":"error","code":"rate_limited","message":"slow down"}');
     }) as unknown as typeof fetch;
 
-    const agent = new KubeclawAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
+    const agent = new ClankstackAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
     await expect(async () => {
       for await (const _ of agent.send('hi')) void _;
     }).rejects.toMatchObject({ code: 'rate_limited' });
@@ -139,8 +139,8 @@ describe('KubeclawAgent.send', () => {
       jsonResponse({ error: { code: 'origin_denied', message: 'nope' } }, 403),
     ) as unknown as typeof fetch;
 
-    const agent = new KubeclawAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
-    await expect(agent.ensureSession()).rejects.toBeInstanceOf(KubeclawError);
+    const agent = new ClankstackAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
+    await expect(agent.ensureSession()).rejects.toBeInstanceOf(ClankstackError);
     await expect(agent.ensureSession()).rejects.toMatchObject({
       code: 'origin_denied',
       status: 403,
@@ -153,7 +153,7 @@ describe('KubeclawAgent.send', () => {
       return sseResponse('{"type":"error","code":"internal_error","message":"boom"}');
     }) as unknown as typeof fetch;
 
-    const agent = new KubeclawAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
+    const agent = new ClankstackAgent({ endpoint: ENDPOINT, publishableKey: PK, fetchImpl });
     const result = agent.send('hi');
     // Consume without throwing inside the loop assertion.
     const consume = (async () => {
@@ -164,6 +164,6 @@ describe('KubeclawAgent.send', () => {
   });
 
   it('requires a publishable key', () => {
-    expect(() => new KubeclawAgent({ publishableKey: '' })).toThrow(KubeclawError);
+    expect(() => new ClankstackAgent({ publishableKey: '' })).toThrow(ClankstackError);
   });
 });
