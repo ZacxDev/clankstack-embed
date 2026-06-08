@@ -2,8 +2,11 @@ name: release-embed
 
 # Tag the component to publish to npm:
 #   git tag embed-v0.1.1 && git push origin embed-v0.1.1
-# Requires an NPM_TOKEN repo secret (an npm *automation* token — bypasses 2FA;
-# create at npmjs.com → Access Tokens → Generate → Automation).
+#
+# Uses npm Trusted Publishing (OIDC) — NO NPM_TOKEN secret needed. One-time setup
+# on npmjs.com: the @clank-stack/agent-embed package → Settings → Trusted Publisher
+# → GitHub Actions: org/user ZacxDev, repo clankstack-embed, workflow
+# release-embed.yml. Provenance attestation is generated automatically.
 on:
   push:
     tags: ["embed-v*"]
@@ -11,14 +14,18 @@ on:
 jobs:
   npm:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for OIDC trusted publishing + provenance
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          registry-url: "https://registry.npmjs.org"
           cache: npm
           cache-dependency-path: embed/package-lock.json
+      - name: ensure npm supports trusted publishing (>= 11.5.1)
+        run: npm install -g npm@latest
       - name: build, test, publish
         working-directory: embed
         run: |
@@ -26,5 +33,3 @@ jobs:
           npm run typecheck
           npm test
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
