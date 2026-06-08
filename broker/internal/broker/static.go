@@ -16,6 +16,25 @@ var agentJS []byte
 //go:embed web/demo.html
 var demoHTML []byte
 
+// app.css is the pre-built, minified Tailwind stylesheet for the demo and admin
+// pages. It is generated from broker/web-src/ with the standalone Tailwind CLI
+// (no Node in the broker build) and committed; see web-src/README.md to rebuild.
+//
+//go:embed web/app.css
+var appCSS []byte
+
+// handleAppCSS serves the pre-built Tailwind stylesheet for the server-rendered
+// pages (demo + admin). Same-origin only, so no CORS header is needed.
+func (s *Server) handleAppCSS(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, newAPIError(http.StatusMethodNotAllowed, "method_not_allowed", "use GET"))
+		return
+	}
+	w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	_, _ = w.Write(appCSS)
+}
+
 // handleAgentJS serves the <kubeclaw-agent> ESM bundle.
 func (s *Server) handleAgentJS(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

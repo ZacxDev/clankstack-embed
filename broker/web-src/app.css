@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * A few small component classes the templates lean on. Defining them with
+ * @apply keeps the markup readable (the demo + admin pages share one "card",
+ * "btn", "pill" vocabulary) and lets light/dark stay consistent in one place.
+ */
+@layer components {
+  /* Page background gradient — purple-tinted, light + dark variants. */
+  .cs-bg {
+    @apply bg-[radial-gradient(1200px_600px_at_50%_-10%,#ede9fe_0%,#f8fafc_45%,#f1f5f9_100%)] text-slate-900
+           dark:bg-[radial-gradient(1200px_600px_at_50%_-10%,#2e1065_0%,#0b1120_50%,#020617_100%)] dark:text-slate-200;
+  }
+
+  .cs-card {
+    @apply rounded-2xl border border-slate-200 bg-white p-5 sm:px-6
+           dark:border-slate-800 dark:bg-slate-900;
+  }
+
+  .cs-code {
+    @apply rounded-md bg-slate-100 px-1.5 py-0.5 text-[0.9em] break-all
+           dark:bg-slate-800 dark:text-slate-100;
+  }
+
+  /* Buttons share a base; .cs-btn-primary / .cs-btn-danger layer on top. */
+  .cs-btn {
+    @apply inline-flex items-center justify-center cursor-pointer rounded-lg border border-slate-300
+           bg-white px-3 py-1.5 text-sm font-medium text-slate-900 transition-colors
+           hover:border-slate-400
+           dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500;
+  }
+
+  .cs-btn-primary {
+    @apply border-accent bg-accent text-white hover:border-accent hover:bg-violet-700
+           dark:border-accent dark:bg-accent dark:text-white dark:hover:bg-violet-700;
+  }
+
+  .cs-btn-danger {
+    @apply border-red-300 text-red-700 hover:border-red-400
+           dark:border-red-900 dark:text-red-400 dark:hover:border-red-700;
+  }
+
+  .cs-input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-slate-900
+           outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30
+           dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  .cs-label {
+    @apply mt-3.5 mb-1 block text-sm font-semibold text-slate-800 dark:text-slate-200;
+  }
+
+  .cs-hint {
+    @apply font-normal text-slate-500 dark:text-slate-400;
+  }
+
+  .cs-h2 {
+    @apply m-0 mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+  }
+
+  .cs-pill {
+    @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .cs-pill-on {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300;
+  }
+  .cs-pill-off {
+    @apply bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300;
+  }
+
+  /* Header theme-toggle button: square, icon-only. */
+  .cs-toggle {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300
+           bg-white/70 text-slate-700 transition-colors backdrop-blur
+           hover:border-slate-400 hover:text-slate-900
+           dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-300
+           dark:hover:border-slate-500 dark:hover:text-white;
+  }
+  /* The sun icon shows in dark mode (click to go light); the moon shows in
+     light mode (click to go dark). Toggled purely via the `dark` class. */
+  .cs-toggle .cs-icon-sun { @apply hidden dark:inline; }
+  .cs-toggle .cs-icon-moon { @apply inline dark:hidden; }
+}

@@ -4,48 +4,68 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>clankstack — agents on the web</title>
+    <!--
+      No-FOUC theme bootstrap: set the `dark` class BEFORE first paint so the
+      page never flashes the wrong theme. Reads the persisted choice, falling
+      back to the OS preference on first visit.
+    -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="/assets/app.css" />
     <style>
-      :root { color-scheme: light dark; }
-      body {
-        margin: 0; min-height: 100vh; font-family: system-ui, -apple-system, sans-serif;
-        background: radial-gradient(1200px 600px at 50% -10%, #ede9fe 0%, #f8fafc 45%, #f1f5f9 100%);
-        color: #0f172a; display: flex; flex-direction: column; align-items: center;
-      }
-      @media (prefers-color-scheme: dark) {
-        body { background: radial-gradient(1200px 600px at 50% -10%, #2e1065 0%, #0b1120 50%, #020617 100%); color: #e2e8f0; }
-        .card { background: #0f172a; border-color: #1e293b; }
-        code { background: #1e293b; }
-      }
-      main { width: 100%; max-width: 760px; padding: 4rem 1.25rem 6rem; box-sizing: border-box; }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 .5rem; letter-spacing: -0.02em; }
-      p.lead { font-size: 1.1rem; opacity: .8; margin: 0 0 2rem; }
-      .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.25rem 1.5rem; margin: 1rem 0; }
-      h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .06em; opacity: .6; margin: 0 0 .75rem; }
-      code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 6px; font-size: .9em; }
-      pre { overflow-x: auto; background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 12px; font-size: .85rem; line-height: 1.5; }
+      /* The web component renders in its own shadow DOM; Tailwind on the host
+         page does not (and should not) reach into it. Only its public CSS vars
+         are set here. */
       clankstack-agent { --cs-accent: #7c3aed; --cs-radius: 14px; }
     </style>
   </head>
-  <body>
-    <main>
-      <h1>Agents on the web</h1>
-      <p class="lead">
-        This page embeds a live clankstack agent with one tag. The chat below talks
-        to a real agent running in-cluster, through the clankstack broker — no API
-        keys in the browser, just a publishable key.
-      </p>
+  <body class="cs-bg flex min-h-screen flex-col items-center font-sans antialiased">
+    <main class="box-border w-full max-w-3xl px-5 pb-24 pt-16">
+      <header class="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 class="m-0 mb-2 text-4xl font-bold tracking-tight sm:text-5xl">Agents on the web</h1>
+          <p class="m-0 max-w-xl text-lg text-slate-600 dark:text-slate-300">
+            This page embeds a live clankstack agent with one tag. The chat below
+            talks to a real agent running in-cluster, through the clankstack
+            broker — no API keys in the browser, just a publishable key.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="cs-toggle shrink-0"
+          data-theme-toggle
+          title="Toggle dark mode"
+          aria-label="Toggle dark mode"
+        >
+          <svg class="cs-icon-sun h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+          </svg>
+          <svg class="cs-icon-moon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+      </header>
 
-      <div class="card">
-        <h2>The whole integration</h2>
-        <pre>&lt;script type="module" src="https://agents.zacx.dev/embed/agent.js"&gt;&lt;/script&gt;
+      <div class="cs-card my-4">
+        <h2 class="cs-h2">The whole integration</h2>
+        <pre class="overflow-x-auto rounded-xl bg-slate-900 p-4 text-sm leading-relaxed text-slate-200 dark:bg-black/40">&lt;script type="module" src="https://agents.zacx.dev/embed/agent.js"&gt;&lt;/script&gt;
 &lt;clankstack-agent
   publishable-key="pk_live_…"
   endpoint="https://agents.zacx.dev"
   mode="inline"&gt;&lt;/clankstack-agent&gt;</pre>
       </div>
 
-      <div class="card">
-        <h2>Live agent</h2>
+      <div class="cs-card my-4">
+        <h2 class="cs-h2">Live agent</h2>
         <clankstack-agent
           publishable-key="pk_live_dogfood0000000000000000"
           endpoint="https://agents.zacx.dev"
@@ -56,6 +76,14 @@
       </div>
     </main>
 
+    <script>
+      // Theme toggle: flip the `dark` class and persist the explicit choice.
+      document.addEventListener('click', function (ev) {
+        if (!ev.target.closest('[data-theme-toggle]')) return;
+        var isDark = document.documentElement.classList.toggle('dark');
+        try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      });
+    </script>
     <script type="module" src="/embed/agent.js"></script>
   </body>
 </html>

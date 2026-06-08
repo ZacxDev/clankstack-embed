@@ -153,6 +153,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/embeds", s.handleEmbeds)
 	mux.HandleFunc("/v1/embeds/", s.handleEmbeds)
 	mux.HandleFunc("/embed/agent.js", s.handleAgentJS)
+	mux.HandleFunc("/assets/app.css", s.handleAppCSS)
 	mux.HandleFunc("/demo", s.handleDemo)
 
 	// Web admin UI (server-rendered, cookie-gated). Registered as specific
