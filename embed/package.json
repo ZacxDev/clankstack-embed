@@ -1,6 +1,6 @@
 {
   "name": "@clank-stack/agent-embed",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Embeddable web component + headless JS SDK for the clankstack agent framework — paste a snippet and get a streaming agent chat on any website.",
   "type": "module",
   "main": "./dist/agent.js",

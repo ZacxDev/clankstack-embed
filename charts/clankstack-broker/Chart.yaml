@@ -5,8 +5,8 @@ description: >-
   gateways and exposes them as a safe, abuse-bounded, embeddable web surface for
   the <clankstack-agent> web component.
 type: application
-version: 0.1.0
-appVersion: "0.3.3"
+version: 0.1.1
+appVersion: "0.3.4"
 home: https://github.com/ZacxDev/clankstack-embed
 sources:
   - https://github.com/ZacxDev/clankstack-embed
